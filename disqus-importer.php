@@ -85,12 +85,10 @@ if ( class_exists( 'WP_Importer' ) ) {
 				$link = (string)$thread->link;
 
 				if (empty($this->thread_to_post_id[$threadid])) {
-					if (trailingslashit( $link ) == trailingslashit( get_option( 'siteurl' ) ) ) {
-						$this->thread_to_post_id[$threadid] = (int) get_option( 'page_on_front' );
-					} else {
-						$this->thread_to_post_id[$threadid] = url_to_postid($link);
-						// echo "<li>URL to postid: <code>", $link, "</code> - <code>", $this->thread_to_post_id[$threadid], "</code></li>";
-					}
+					preg_match('#([a-z0-9]+(-[a-z0-9]+)+)#', $link, $matches);
+					$slug = $matches[1];
+					if ($slug) $post = get_page_by_path($slug, OBJECT, 'post');
+					if ($slug && $post) $this->thread_to_post_id[$threadid] = $post->ID;
 				}
 			}
 
@@ -283,7 +281,7 @@ if ( class_exists( 'WP_Importer' ) ) {
 				$this->post_ids_processed[ $comment['comment_post_ID'] ]++;
 				$this->num_comments++;
 
-				echo '<li>'. sprintf(__( 'Imported comment by %s on %s.', 'disqus-importer') , esc_html( stripslashes( $comment['comment_author'] )) , get_the_title( $comment['comment_post_ID'] ) ) ."</li>\n";
+				echo '<li>'. sprintf(__( 'Imported comment Disqus ID %d by %s on %s.', 'disqus-importer') , $comment['disqus_guid'],  esc_html( stripslashes( $comment['comment_author'] )) , get_the_title( $comment['comment_post_ID'] ) ) ."</li>\n";
 			} else {
 				$this->num_duplicates++;
 				echo '<li>'. __( 'Skipped duplicate comment.', 'disqus-importer' ) ."</li>\n";
